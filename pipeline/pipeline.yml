@@ -1,0 +1,53 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-autosd-image
+spec:
+  params:
+  - name: playbookGitRepoURL
+    description: URL to the git repository of the playbook that should be run.
+    type: string
+    default: "https://github.com/ygalblum/autosd-build-pipeline.git"
+  - name: playbookGitRevision
+    description: Git revision of the playbook that should be run.
+    type: string
+    default: main
+  - name: playbookFilename
+    description: Filename of the playbook that should be run.
+    type: string
+    default: playbook.yml
+  workspaces:
+  - name: ansible
+  tasks:
+  - name: git-clone
+    params:
+    - name: url
+      value: $(params.playbookGitRepoURL)
+    - name: revision
+      value: $(params.playbookGitRevision)
+    - name: deleteExisting
+      value: "true"
+    workspaces:
+    - name: output
+      workspace: ansible
+    timeout: 10m
+    taskRef:
+      kind: ClusterTask
+      name: git-clone
+  - name: ansible-runner
+    params:
+    - name: project-dir
+      value: ansible-runner
+    - name: args
+      value:
+      - -p
+      - $(params.playbookFilename)
+    workspaces:
+    - name: runner-dir
+      workspace: ansible
+    runAfter:
+    - git-clone
+    timeout: 1h
+    taskRef:
+      kind: Task
+      name: ansible-runner
