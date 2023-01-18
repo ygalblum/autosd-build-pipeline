@@ -1,0 +1,28 @@
+- name: Create SSH Key Pair and store as secrets
+  hosts: localhost
+  gather_facts: false
+  vars:
+    keypair_name: "id_ssh"
+    keypair_path: "/tmp/"
+    namespace: "ygal-build"
+    secret_name: "public-key"
+  tasks:
+    - name: Generate the key pair
+      community.crypto.openssh_keypair:
+        path: "{{keypair_path}}/{{keypair_name}}"
+        type: "ed25519"
+        force: true
+    - name: Save public key as secret
+      kubernetes.core.k8s:
+        apply: true
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ secret_name }}"
+            namespace: "{{ namespace }}"
+          type: Opaque
+          data:
+            id_ed25519.pub: "{{ lookup('file', keypair_path + '/' + keypair_name + '.pub') | b64encode}}"
+
