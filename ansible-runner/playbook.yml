@@ -1,4 +1,4 @@
-- name: Create SSH Key Pair and store as secrets
+- name: Start the build machine
   hosts: localhost
   gather_facts: false
   vars:
