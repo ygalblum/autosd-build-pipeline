@@ -6,6 +6,11 @@
     keypair_path: "/tmp/"
     namespace: "ygal-build"
     secret_name: "public-key"
+    build_machine_details:
+      name: "autosd-build"
+      data_source_name: centos-stream9
+      data_source_namespace: openshift-virtualization-os-images
+      public_key_secret_name: "{{ secret_name }}"
   tasks:
     - name: Generate the key pair
       community.crypto.openssh_keypair:
@@ -25,4 +30,12 @@
           type: Opaque
           data:
             id_ed25519.pub: "{{ lookup('file', keypair_path + '/' + keypair_name + '.pub') | b64encode}}"
-
+    - name: Start the build machine
+      kubernetes.core.k8s:
+        apply: true
+        state: present
+        template: templates/vm-template.j2
+        wait: true
+        wait_condition:
+          type: Ready
+        wait_timeout: 600

@@ -1,0 +1,90 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  annotations:
+    vm.kubevirt.io/validations: |
+      [
+        {
+          "name": "minimal-required-memory",
+          "path": "jsonpath::.spec.domain.resources.requests.memory",
+          "rule": "integer",
+          "message": "This VM requires more memory.",
+          "min": 1610612736
+        }
+      ]
+  labels:
+    app: {{ build_machine_details.name }}
+    vm.kubevirt.io/template: centos-stream9-server-medium
+    vm.kubevirt.io/template.revision: "1"
+    vm.kubevirt.io/template.version: v0.23.5
+  name: {{ build_machine_details.name }}
+  namespace: {{ namespace }}
+spec:
+  dataVolumeTemplates:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    metadata:
+      name: {{ build_machine_details.name }}
+    spec:
+      sourceRef:
+        kind: DataSource
+        name: {{ build_machine_details.data_source_name }}
+        namespace: {{ build_machine_details.data_source_namespace }}
+      storage:
+        resources:
+          requests:
+            storage: 30Gi
+  running: true
+  template:
+    metadata:
+      annotations:
+        vm.kubevirt.io/flavor: medium
+        vm.kubevirt.io/os: centos-stream9
+        vm.kubevirt.io/workload: server
+      labels:
+        kubevirt.io/domain: {{ build_machine_details.name }}
+        kubevirt.io/size: medium
+    spec:
+      domain:
+        cpu:
+          cores: 1
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: rootdisk
+          - disk:
+              bus: virtio
+            name: cloudinitdisk
+          interfaces:
+          - masquerade: {}
+            name: default
+          networkInterfaceMultiqueue: true
+          rng: {}
+        machine:
+          type: pc-q35-rhel8.6.0
+        resources:
+          requests:
+            memory: 4Gi
+      evictionStrategy: LiveMigrate
+      networks:
+      - name: default
+        pod: {}
+      terminationGracePeriodSeconds: 180
+      accessCredentials:
+      - sshPublicKey:
+          source:
+            secret:
+              secretName: {{ build_machine_details.public_key_secret_name }}
+          propagationMethod:
+            configDrive: {}
+      volumes:
+      - dataVolume:
+          name: {{ build_machine_details.name }}
+        name: rootdisk
+      - cloudInitConfigDrive:
+          userData: |-
+            #cloud-config
+        name: cloudinitdisk
