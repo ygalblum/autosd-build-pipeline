@@ -39,6 +39,8 @@ spec:
     - name: vars
       value:
       - target_namespace="$(context.pipelineRun.namespace)"
+      - public_key_secret_name="$(context.pipelineRun.name)-public"
+      - private_key_secret_name="$(context.pipelineRun.name)-private"
     taskRef:
       kind: Task
       name: ansible-runner-extravars
