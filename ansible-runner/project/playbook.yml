@@ -4,7 +4,6 @@
   vars:
     keypair_name: "id_ssh"
     keypair_path: "/tmp/"
-    build_machine_name: "autosd-build"
     build_machine_data_source_name: centos-stream9
     build_machine_data_source_namespace: openshift-virtualization-os-images
   tasks:
