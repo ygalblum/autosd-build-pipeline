@@ -13,23 +13,23 @@ metadata:
         }
       ]
   labels:
-    app: {{ build_machine_details.name }}
+    app: {{ build_machine_name }}
     vm.kubevirt.io/template: centos-stream9-server-medium
     vm.kubevirt.io/template.revision: "1"
     vm.kubevirt.io/template.version: v0.23.5
-  name: {{ build_machine_details.name }}
+  name: {{ build_machine_name }}
   namespace: {{ target_namespace }}
 spec:
   dataVolumeTemplates:
   - apiVersion: cdi.kubevirt.io/v1beta1
     kind: DataVolume
     metadata:
-      name: {{ build_machine_details.name }}
+      name: {{ build_machine_name }}
     spec:
       sourceRef:
         kind: DataSource
-        name: {{ build_machine_details.data_source_name }}
-        namespace: {{ build_machine_details.data_source_namespace }}
+        name: {{ build_machine_data_source_name }}
+        namespace: {{ build_machine_data_source_namespace }}
       storage:
         resources:
           requests:
@@ -42,7 +42,7 @@ spec:
         vm.kubevirt.io/os: centos-stream9
         vm.kubevirt.io/workload: server
       labels:
-        kubevirt.io/domain: {{ build_machine_details.name }}
+        kubevirt.io/domain: {{ build_machine_name }}
         kubevirt.io/size: medium
     spec:
       domain:
@@ -77,12 +77,12 @@ spec:
       - sshPublicKey:
           source:
             secret:
-              secretName: {{ build_machine_details.public_key_secret_name }}
+              secretName: {{ public_key_secret_name }}
           propagationMethod:
             configDrive: {}
       volumes:
       - dataVolume:
-          name: {{ build_machine_details.name }}
+          name: {{ build_machine_name }}
         name: rootdisk
       - cloudInitConfigDrive:
           userData: |-

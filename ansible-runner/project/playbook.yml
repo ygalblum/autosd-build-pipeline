@@ -4,12 +4,9 @@
   vars:
     keypair_name: "id_ssh"
     keypair_path: "/tmp/"
-    secret_name: "public-key"
-    build_machine_details:
-      name: "autosd-build"
-      data_source_name: centos-stream9
-      data_source_namespace: openshift-virtualization-os-images
-      public_key_secret_name: "{{ secret_name }}"
+    build_machine_name: "autosd-build"
+    build_machine_data_source_name: centos-stream9
+    build_machine_data_source_namespace: openshift-virtualization-os-images
   tasks:
     - name: Generate the key pair
       community.crypto.openssh_keypair:
@@ -24,11 +21,24 @@
           apiVersion: v1
           kind: Secret
           metadata:
-            name: "{{ secret_name }}"
+            name: "{{ public_key_secret_name }}"
             namespace: "{{ target_namespace }}"
           type: Opaque
           data:
             id_ed25519.pub: "{{ lookup('file', keypair_path + '/' + keypair_name + '.pub') | b64encode}}"
+    - name: Save private key as secret
+      kubernetes.core.k8s:
+        apply: true
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ private_key_secret_name }}"
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          data:
+            ssh-privatekey: "{{ lookup('file', keypair_path + '/' + keypair_name) | b64encode}}"
     - name: Start the build machine
       kubernetes.core.k8s:
         apply: true
