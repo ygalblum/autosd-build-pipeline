@@ -16,6 +16,10 @@ spec:
     description: Filename of the playbook that should be run.
     type: string
     default: playbook.yml
+  - name: ansibleUser
+    description: Username to login to the VirtualMachine with Ansible.
+    type: string
+    default: cloud-user
   workspaces:
   - name: ansible
   tasks:
@@ -69,3 +73,34 @@ spec:
     taskRef:
       kind: Task
       name: ansible-runner
+  - name: create-inventory
+    params:
+    - name: SCRIPT
+      value: |
+        #!/usr/bin/env bash
+        set -x
+        mkdir -p \
+          $(workspaces.manifest-dir.path)/env \
+          $(workspaces.manifest-dir.path)/inventory
+        oc get \
+          secret \
+          $(context.pipelineRun.name)-private \
+          -n $(context.pipelineRun.namespace) \
+          -o go-template='{{ index .data "ssh-privatekey" | base64decode }}' \
+          > $(workspaces.manifest-dir.path)/env/ssh_key
+        oc get \
+          vmi \
+          $(context.pipelineRun.name) \
+          -n $(context.pipelineRun.namespace) \
+          -o go-template='vm ansible_user=$(params.ansibleUser) ansible_host={{ index (index .status.interfaces 0) "ipAddress" }}' \
+          > $(workspaces.manifest-dir.path)/inventory/hosts
+    workspaces:
+    - name: manifest-dir
+      workspace: ansible
+      subPath: ansible-runner
+    runAfter:
+    - start-vm
+    timeout: 10m
+    taskRef:
+      kind: ClusterTask
+      name: openshift-client
