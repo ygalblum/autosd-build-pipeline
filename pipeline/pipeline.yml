@@ -51,7 +51,7 @@ spec:
       subPath: ansible-runner
     runAfter:
     - git-clone
-  - name: ansible-runner
+  - name: start-vm
     params:
     - name: project-dir
       value: "."
