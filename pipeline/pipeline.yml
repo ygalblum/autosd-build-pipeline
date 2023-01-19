@@ -34,10 +34,24 @@ spec:
     taskRef:
       kind: ClusterTask
       name: git-clone
+  - name: set-extraenv
+    params:
+    - name: vars
+      value:
+      - target_namespace="$(context.pipelineRun.namespace)"
+    taskRef:
+      kind: Task
+      name: ansible-runner-extravars
+    workspaces:
+    - name: runner-dir
+      workspace: ansible
+      subPath: ansible-runner
+    runAfter:
+    - git-clone
   - name: ansible-runner
     params:
     - name: project-dir
-      value: ansible-runner
+      value: "."
     - name: args
       value:
       - -p
@@ -45,8 +59,9 @@ spec:
     workspaces:
     - name: runner-dir
       workspace: ansible
+      subPath: ansible-runner
     runAfter:
-    - git-clone
+    - set-extraenv
     timeout: 1h
     taskRef:
       kind: Task
