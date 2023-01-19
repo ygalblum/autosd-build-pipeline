@@ -4,7 +4,6 @@
   vars:
     keypair_name: "id_ssh"
     keypair_path: "/tmp/"
-    namespace: "ygal-build"
     secret_name: "public-key"
     build_machine_details:
       name: "autosd-build"
@@ -26,7 +25,7 @@
           kind: Secret
           metadata:
             name: "{{ secret_name }}"
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
           type: Opaque
           data:
             id_ed25519.pub: "{{ lookup('file', keypair_path + '/' + keypair_name + '.pub') | b64encode}}"
