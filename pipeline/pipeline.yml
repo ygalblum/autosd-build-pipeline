@@ -12,10 +12,10 @@ spec:
     description: Git revision of the playbook that should be run.
     type: string
     default: main
-  - name: playbookFilename
+  - name: infraPlaybookFilename
     description: Filename of the playbook that should be run.
     type: string
-    default: playbook.yml
+    default: infra.yml
   - name: ansibleUser
     description: Username to login to the VirtualMachine with Ansible.
     type: string
@@ -62,7 +62,7 @@ spec:
     - name: args
       value:
       - -p
-      - $(params.playbookFilename)
+      - $(params.infraPlaybookFilename)
     workspaces:
     - name: runner-dir
       workspace: ansible
