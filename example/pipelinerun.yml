@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  labels:
+    tekton.dev/pipeline: build-autosd-image
+  name: build-autosd-image-manual
+spec:
+  params:
+  - name: playbookGitRepoURL
+    value: https://github.com/ygalblum/autosd-build-pipeline.git
+  - name: playbookGitRevision
+    value: main
+  - name: infraPlaybookFilename
+    value: infra.yml
+  - name: buildPlaybookFilename
+    value: build.yml
+  - name: ansibleUser
+    value: cloud-user
+  pipelineRef:
+    name: build-autosd-image
+  serviceAccountName: autosd-builder
+  timeout: 1h0m0s
+  workspaces:
+  - name: ansible
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: nfs-client
+        volumeMode: Filesystem

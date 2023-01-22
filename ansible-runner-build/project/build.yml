@@ -1,0 +1,44 @@
+- name: Build a new AutoSD Image
+  hosts: all
+  become: false
+  gather_facts: true
+  vars:
+    osbuild_instructions_repo: "https://gitlab.com/CentOS/automotive/sample-images.git"
+    osbuild_instructions_version: main
+    repo_local_dir: "{{ansible_user_dir}}/image-builder"
+    distro: cs9
+    target: aws
+    image: ocp
+    image_type: regular
+    format: img
+  tasks:
+  - name: Install prerequisites
+    become: true
+    block:
+    - name: Enable OSBuild COPR
+      community.general.copr:
+        name: "@osbuild/osbuild"
+    - name: Install required packages
+      ansible.builtin.package:
+        name:
+        - osbuild
+        - osbuild-tools
+        - osbuild-ostree
+        - git
+        - make
+        - unzip
+        - jq
+        state: present
+  - set_fact:
+      target_arch: "{{ ansible_architecture if ansible_architecture == 'x86_64' else 'aarch64'}}"
+  - name: Download the OSBuild instrcutions
+    ansible.builtin.git:
+      repo: "{{ osbuild_instructions_repo }}"
+      dest: "{{ repo_local_dir }}"
+      version: "{{ osbuild_instructions_version }}"
+  - name: Build the image
+    community.general.make:
+      chdir: "{{ repo_local_dir }}/osbuild-manifests"
+      target: "{{osbuild_target | default([[distro, target, image, image_type]|join('-'), target_arch, format]|join('.'))}}"
+    async: 1200
+    poll: 60

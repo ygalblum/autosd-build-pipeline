@@ -44,7 +44,6 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
-
   workspaces:
   - description: The Ansibler runner directory
     name: runner-dir
