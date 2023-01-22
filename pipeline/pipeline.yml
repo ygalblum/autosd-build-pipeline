@@ -13,9 +13,13 @@ spec:
     type: string
     default: main
   - name: infraPlaybookFilename
-    description: Filename of the playbook that should be run.
+    description: Filename of the playbook that should be run for infrastructure setup.
     type: string
     default: infra.yml
+  - name: buildPlaybookFilename
+    description: Filename of the playbook that should be run for building the image.
+    type: string
+    default: build.yml
   - name: ansibleUser
     description: Username to login to the VirtualMachine with Ansible.
     type: string
@@ -88,6 +92,7 @@ spec:
           -n $(context.pipelineRun.namespace) \
           -o go-template='{{ index .data "ssh-privatekey" | base64decode }}' \
           > $(workspaces.manifest-dir.path)/env/ssh_key
+        sed -i -e '$a\' $(workspaces.manifest-dir.path)/env/ssh_key
         oc get \
           vmi \
           $(context.pipelineRun.name) \
@@ -97,10 +102,28 @@ spec:
     workspaces:
     - name: manifest-dir
       workspace: ansible
-      subPath: ansible-runner
+      subPath: ansible-runner-build
     runAfter:
     - start-vm
     timeout: 10m
     taskRef:
       kind: ClusterTask
       name: openshift-client
+  - name: build-image
+    params:
+    - name: project-dir
+      value: "."
+    - name: args
+      value:
+      - -p
+      - $(params.buildPlaybookFilename)
+    workspaces:
+    - name: runner-dir
+      workspace: ansible
+      subPath: ansible-runner-build
+    runAfter:
+    - create-inventory
+    timeout: 1h
+    taskRef:
+      kind: Task
+      name: ansible-runner
