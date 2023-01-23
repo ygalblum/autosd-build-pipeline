@@ -1,0 +1,68 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: privileged-ansible-runner
+spec:
+  description: Task to run Ansible playbooks using Ansible Runner with privileged security context
+  params:
+  - default: project
+    description: The project directory under the workspace runner-dir
+    name: project-dir
+    type: string
+  - default:
+    - --help
+    description: The arguments to pass ansible-runner
+    name: args
+    type: array
+  - default: /tekton/home
+    description: Absolute path to the user's home directory.
+    name: user-home
+    type: string
+  - default: quay.io/ansible/ansible-runner:stable-2.12-latest
+    description: Ansible runner image.
+    name: image
+    type: string
+  stepTemplate:
+    env:
+    - name: HOME
+      value: $(params.user-home)
+    name: ""
+    resources: {}
+  steps:
+  - image: $(params.image)
+    name: requirements
+    resources: {}
+    script: |
+      #!/bin/bash
+      set -e
+
+      if [ -f requirements.txt ];
+      then
+        pip3 install --user \
+          -r requirements.txt
+      fi
+
+      if [ -f  requirements.yml ];
+      then
+        ansible-galaxy role install -vv \
+          -r requirements.yml
+        ansible-galaxy collection install -vv \
+          -r requirements.yml
+      fi
+    workingDir: $(workspaces.runner-dir.path)/$(params.project-dir)
+  - args:
+    - ansible-runner
+    - run
+    - $(params.args)
+    - $(params.project-dir)
+    command:
+    - entrypoint
+    image: $(params.image)
+    name: run-playbook
+    resources: {}
+    workingDir: $(workspaces.runner-dir.path)
+    securityContext:
+        privileged: true
+  workspaces:
+  - description: The Ansibler runner directory
+    name: runner-dir

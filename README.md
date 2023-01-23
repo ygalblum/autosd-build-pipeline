@@ -21,7 +21,7 @@ make deploy
 
 - Deploy the required tasks
     ```bash
-    oc apply -f tasks/extravars-task.yml
+    oc apply -f tasks/
     ```
 
 - Deploy the pipeline
