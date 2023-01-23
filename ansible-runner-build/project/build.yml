@@ -40,5 +40,5 @@
     community.general.make:
       chdir: "{{ repo_local_dir }}/osbuild-manifests"
       target: "{{osbuild_target | default([[distro, target, image, image_type]|join('-'), target_arch, format]|join('.'))}}"
-    async: 1200
-    poll: 60
+    async: 3600
+    poll: 300
