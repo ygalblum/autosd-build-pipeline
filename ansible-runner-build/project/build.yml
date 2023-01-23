@@ -10,7 +10,7 @@
     target: aws
     image: ocp
     image_type: regular
-    format: img
+    format: qcow2
   tasks:
   - name: Install prerequisites
     become: true
@@ -28,9 +28,12 @@
         - make
         - unzip
         - jq
+        - httpd
         state: present
   - set_fact:
       target_arch: "{{ ansible_architecture if ansible_architecture == 'x86_64' else 'aarch64'}}"
+  - set_fact:
+      target_image_name: "{{osbuild_target | default([[distro, target, image, image_type]|join('-'), target_arch, format]|join('.'))}}"
   - name: Download the OSBuild instrcutions
     ansible.builtin.git:
       repo: "{{ osbuild_instructions_repo }}"
@@ -39,6 +42,19 @@
   - name: Build the image
     community.general.make:
       chdir: "{{ repo_local_dir }}/osbuild-manifests"
-      target: "{{osbuild_target | default([[distro, target, image, image_type]|join('-'), target_arch, format]|join('.'))}}"
+      target: "{{ target_image_name }}"
     async: 3600
     poll: 300
+  - name: Handle HTTP server
+    become: true
+    block:
+    - name: Copy the image
+      ansible.builtin.copy:
+        src: "{{ repo_local_dir }}/osbuild-manifests/{{ target_image_name }}"
+        dest: /var/www/html/disk.qcow2
+        remote_src: yes
+    - name: Start and enable httpd service
+      service:
+        name: httpd
+        enabled: true
+        state: started
