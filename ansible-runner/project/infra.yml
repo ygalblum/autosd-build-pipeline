@@ -47,3 +47,8 @@
         wait_condition:
           type: Ready
         wait_timeout: 600
+    - name: Deploy the http service
+      kubernetes.core.k8s:
+        apply: true
+        state: present
+        template: templates/http-service-template.j2

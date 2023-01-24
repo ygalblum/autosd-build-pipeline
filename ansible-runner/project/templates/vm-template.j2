@@ -42,6 +42,7 @@ spec:
         vm.kubevirt.io/os: centos-stream9
         vm.kubevirt.io/workload: server
       labels:
+        app: {{ build_machine_name }}
         kubevirt.io/domain: {{ build_machine_name }}
         kubevirt.io/size: medium
     spec:
