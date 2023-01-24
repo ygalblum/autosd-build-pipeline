@@ -119,3 +119,37 @@ spec:
     taskRef:
       kind: Task
       name: privileged-ansible-runner
+  - name: test-vm-set-extraenv
+    params:
+    - name: vars
+      value:
+      - target_namespace="$(context.pipelineRun.namespace)"
+      - public_key_secret_name="$(context.pipelineRun.name)-public"
+      - build_machine_name="$(context.pipelineRun.name)"
+    taskRef:
+      kind: Task
+      name: ansible-runner-extravars
+    workspaces:
+    - name: runner-dir
+      workspace: ansible
+      subPath: ansible-runners/test-vm
+    runAfter:
+    - build-image
+  - name: start-test-vm
+    params:
+    - name: project-dir
+      value: "."
+    - name: args
+      value:
+      - -p
+      - playbook.yml
+    workspaces:
+    - name: runner-dir
+      workspace: ansible
+      subPath: ansible-runners/test-vm
+    runAfter:
+    - test-vm-set-extraenv
+    timeout: 1h
+    taskRef:
+      kind: Task
+      name: ansible-runner

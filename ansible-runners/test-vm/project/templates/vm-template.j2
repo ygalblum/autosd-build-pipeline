@@ -1,0 +1,74 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: {{ build_machine_name }}-test
+  namespace: {{ target_namespace }}
+spec:
+  dataVolumeTemplates:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    metadata:
+      name: {{ build_machine_name }}-test
+    spec:
+      source:
+        http:
+          url: http://{{build_machine_name}}:8080/disk.qcow2
+      storage:
+        resources:
+          requests:
+            storage: 30Gi
+  running: true
+  template:
+    metadata:
+      annotations:
+        vm.kubevirt.io/flavor: medium
+        vm.kubevirt.io/os: centos-stream9
+        vm.kubevirt.io/workload: server
+      labels:
+        app: {{ build_machine_name }}-test
+        kubevirt.io/domain: {{ build_machine_name }}-test
+        kubevirt.io/size: medium
+    spec:
+      domain:
+        cpu:
+          cores: 1
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: rootdisk
+          - disk:
+              bus: virtio
+            name: cloudinitdisk
+          interfaces:
+          - masquerade: {}
+            name: default
+          networkInterfaceMultiqueue: true
+          rng: {}
+        machine:
+          type: pc-q35-rhel8.6.0
+        resources:
+          requests:
+            memory: 4Gi
+      evictionStrategy: LiveMigrate
+      networks:
+      - name: default
+        pod: {}
+      terminationGracePeriodSeconds: 180
+      accessCredentials:
+      - sshPublicKey:
+          source:
+            secret:
+              secretName: {{ public_key_secret_name }}
+          propagationMethod:
+            configDrive: {}
+      volumes:
+      - dataVolume:
+          name: {{ build_machine_name }}-test
+        name: rootdisk
+      - cloudInitConfigDrive:
+          userData: |-
+            #cloud-config
+        name: cloudinitdisk
