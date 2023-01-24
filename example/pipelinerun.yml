@@ -10,10 +10,6 @@ spec:
     value: https://github.com/ygalblum/autosd-build-pipeline.git
   - name: playbookGitRevision
     value: main
-  - name: infraPlaybookFilename
-    value: infra.yml
-  - name: buildPlaybookFilename
-    value: build.yml
   - name: ansibleUser
     value: cloud-user
   pipelineRef:

@@ -12,14 +12,6 @@ spec:
     description: Git revision of the playbook that should be run.
     type: string
     default: main
-  - name: infraPlaybookFilename
-    description: Filename of the playbook that should be run for infrastructure setup.
-    type: string
-    default: infra.yml
-  - name: buildPlaybookFilename
-    description: Filename of the playbook that should be run for building the image.
-    type: string
-    default: build.yml
   - name: ansibleUser
     description: Username to login to the VirtualMachine with Ansible.
     type: string
@@ -56,7 +48,7 @@ spec:
     workspaces:
     - name: runner-dir
       workspace: ansible
-      subPath: ansible-runner
+      subPath: ansible-runners/infra
     runAfter:
     - git-clone
   - name: start-vm
@@ -66,11 +58,11 @@ spec:
     - name: args
       value:
       - -p
-      - $(params.infraPlaybookFilename)
+      - playbook.yml
     workspaces:
     - name: runner-dir
       workspace: ansible
-      subPath: ansible-runner
+      subPath: ansible-runners/infra
     runAfter:
     - set-extraenv
     timeout: 1h
@@ -102,7 +94,7 @@ spec:
     workspaces:
     - name: manifest-dir
       workspace: ansible
-      subPath: ansible-runner-build
+      subPath: ansible-runners/image-builder
     runAfter:
     - start-vm
     timeout: 10m
@@ -116,11 +108,11 @@ spec:
     - name: args
       value:
       - -p
-      - $(params.buildPlaybookFilename)
+      - playbook.yml
     workspaces:
     - name: runner-dir
       workspace: ansible
-      subPath: ansible-runner-build
+      subPath: ansible-runners/image-builder
     runAfter:
     - create-inventory
     timeout: 1h
