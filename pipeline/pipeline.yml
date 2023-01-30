@@ -18,6 +18,37 @@ spec:
     default: cloud-user
   workspaces:
   - name: ansible
+  finally:
+  - name: remove-resources
+    params:
+    - name: SCRIPT
+      value: |
+        #!/usr/bin/env bash
+        set -x
+        oc delete \
+          secret \
+          $(context.pipelineRun.name)-private \
+          -n $(context.pipelineRun.namespace)
+        oc delete \
+          secret \
+          $(context.pipelineRun.name)-public \
+          -n $(context.pipelineRun.namespace)
+        oc delete \
+          vm \
+          $(context.pipelineRun.name) \
+          -n $(context.pipelineRun.namespace)
+        oc delete \
+          vm \
+          $(context.pipelineRun.name)-test \
+          -n $(context.pipelineRun.namespace)
+    workspaces:
+    - name: manifest-dir
+      workspace: ansible
+      subPath: ansible-runners/image-builder
+    timeout: 10m
+    taskRef:
+      kind: ClusterTask
+      name: openshift-client
   tasks:
   - name: git-clone
     params:
