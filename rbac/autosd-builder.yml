@@ -22,6 +22,15 @@ rules:
   - "virtualmachineinstances"
   verbs:
   - "*"
+- apiGroups:
+  - "security.openshift.io"
+  resources:
+  - "securitycontextconstraints"
+  resourceNames:
+  - "anyuid"
+  - "privileged"
+  verbs:
+  - "use"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
