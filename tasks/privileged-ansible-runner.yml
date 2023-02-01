@@ -62,7 +62,7 @@ spec:
     resources: {}
     workingDir: $(workspaces.runner-dir.path)
     securityContext:
-        privileged: true
+      privileged: true
   workspaces:
   - description: The Ansibler runner directory
     name: runner-dir
